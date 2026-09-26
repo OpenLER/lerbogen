@@ -4,25 +4,84 @@
 {% filter markdown %}
 # Fejlkoder
 
-LER's autoritative kilde for API-fejlkoder er endpointet `GET /api/errorcodes`,
-som returnerer alle fejlkoder og navngivne forretningsregler serveren kan returnere
-(hentet direkte fra LER, ikke fra dokumentation der kan halte bagefter – se
-`adr/901-ler-api-error-codes.md` i repoet).
+## Hvor et kald kan fejle {: .h4 .mt-4 }
 
-Denne side er ikke version-præfikset som resten af LER-bogen: fejlkoderne er
-fælles på tværs af LER's datamodel-versioner (2.0, 2.1, 2.2, …) – der er intet der
-tyder på at de nogensinde varierer med datamodellen. De kan til gengæld tænkes at
-variere på tværs af API-integrationsversion (V1/V2/V3 af de enkelte service-endpoints)
-– det er ikke undersøgt endnu, og listen herunder er ikke opdelt efter det.
+Et kald til LER's API kan fejle, før det når frem til LER's egen kode. Svaret har
+derfor én af fire former, og kun den sidste indeholder LER's fejlkoder:
 
-Listen falder i to grupper, der opfører sig forskelligt i et API-svar:
+| Form | Hvornår | HTTP |
+|---|---|---|
+| Intet svar | Intet klientcertifikat: TLS-håndtrykket fejler | – |
+| HTML-side (IIS) | Id, der ikke er et heltal (`abc`, `1.5`, for stort), ukendt version (`v9`), sti uden for `/api/` | 404 |
+| ASP.NET: `{"Message": "..."}` | Ingen route matcher (fx manglende `requestId`), ugyldigt `requestId`/`transactionId`/`indberetningsNr`, forkert metode | 400/404/405 |
+| LER-kuvert | Alt, der når frem til LER's egen kode | altid 200 |
 
-- **Nummererede fejlkoder** (`XX-XXX`) – står direkte i
-  `Error.ErrorCode` i JSON-svaret. Grupperet efter integration/service herunder.
-- **Navngivne forretningsregler** – *ikke* selvstændige
-  `ErrorCode`-værdier. De fremgår kun som fritekst i
-  `Error.PrettyErrorMessage` (typisk `<RegelNavn uden "Rule">: <besked>`),
-  mens `ErrorCode` forbliver den generiske overordnede kode for den service der afviste.
+Set i ca. 500 svar fra 8 endpoints på extest, 2026-09-26. Se
+`ler-api-experiments` (README'en, afsnittet "Hvad gælder på tværs").
+
+## LER-kuverten {: .h4 .mt-4 }
+
+LER's egen kode svarer altid med HTTP 200. Det egentlige udfald står i body'en:
+en kuvert med nøglerne `Data`, `StatusCode`, `RequestId`, `TransactionId`,
+`Forretningskvittering`, `Transportkvittering`, `Error` og `SendTimestamp`.
+`StatusCode` 200/201 betyder ok, 400/401/403/500 betyder fejl. Samme fejl kan
+få forskellig `StatusCode` på forskellige endpoints.
+
+Ved en fejl er `Error` udfyldt. I alle de svar, jeg har set, har den altid de
+samme seks felter. Et eksempel, hvor geometrien kun havde 2 tal pr. vertex:
+
+    {
+        "ResourceId": "27388",
+        "UrlParameters": "/api/GraveforespoergselSvarV3/27388?requestId=ee00d4e7-08a6-49b8-b7bc-b06441fd4786&transactionId=3402dcc6-2322-409c-ab75-45f76cdfb2a7&indberetningsNr=1772&tjenesteaftagerCvr=29189714&isOpdatering=true",
+        "ErrorCode": "13-300",
+        "SystemErrorMessage": "Package data validation failed",
+        "PrettyErrorMessage": "Check3DGeometry: Geometrier er ikke angivet i 3 dimensioner at element: geometri  .",
+        "DocumentationLink": "https://services-extest.ler.dk/api/errorcodes/13-300"
+    }
+
+- `ErrorCode`: en nummereret fejlkode, se herunder.
+- `SystemErrorMessage`: en fast tekst for fejlkoden, her `Package data validation failed`.
+- `PrettyErrorMessage`: en mere konkret beskrivelse af fejlen.
+- `DocumentationLink`: `/api/errorcodes/{ErrorCode}`.
+- `ResourceId`: id'et fra URL'en, her graveforespørgslens id.
+- `UrlParameters`: den kaldte URL, med LER's interne stinavn (`GraveforespoergselSvarV3`).
+
+## To niveauer af fejlkoder {: .h4 .mt-4 }
+
+Fejlkoderne findes i to niveauer:
+
+- **Nummererede fejlkoder** (`XX-XXX`) står i `ErrorCode`. De fortæller, hvor fejlen
+  opstod, og giver en grov klassificering. `13-300` betyder fx blot, at indholdet af
+  et graveforespørgselssvar (integration 13) er ugyldigt.
+- **Navngivne regler** fortæller, hvilket konkret krav der blev brudt. De har intet
+  felt for sig selv, men fremgår kun som tekst i `PrettyErrorMessage`, og
+  `ErrorCode` er stadig den overordnede kode, fx `13-300`.
+
+`PrettyErrorMessage` ved `13-300` har flere formater:
+
+- `Regel: tekst`, fx `Check3DGeometry: Geometrier er ikke angivet i 3 dimensioner …`.
+  Regelnavnet står uden det `Rule`, som koden har i listen herunder (`Check3DGeometryRule`).
+- `EtableringstidspunktRule value is not valid dateFormat …`: med `Rule` og uden kolon.
+- `Line: 11, Position 32: 'The '…:gyldigTil' element is invalid …'`: XSD-fejl, med .NET's egen tekst.
+- Andre .NET-fejl uden regelnavn, fx ved manglende `xmlns:xlink` (se Andre krav, G4).
+
+Samme `PrettyErrorMessage` kan indeholde flere fejl.
+
+## Listen fra /api/errorcodes {: .h4 .mt-4 }
+
+LER's autoritative kilde for fejlkoderne er endpointet `GET /api/errorcodes`
+(se `adr/901-ler-api-error-codes.md` i repoet). Listen herunder er hentet derfra
+2026-08-08 (`errorcodes.json`). Et ukendt id på `/api/errorcodes/{id}` giver
+`StatusCode` 204, ikke en fejl.
+
+Endpointet returnerer begge niveauer i én flad liste. Efter min mening burde de have
+haft hver sit endpoint. Siden deler dem i to tabeller. Den anden tabel indeholder
+dog også koder, der ikke er regler, fx `UnexpectedError` og
+`UtilityPackageAlreadyDelivered`.
+
+Fejlkoderne ser ud til at være fælles for alle LER's datamodel-versioner (2.0, 2.1,
+2.2, …). Om de varierer med API-versionen (v1/v2/v3 af de enkelte endpoints), er ikke
+undersøgt.
 {% endfilter %}
 
 <h2 class="h4 mt-4">Nummererede fejlkoder</h2>

@@ -398,7 +398,9 @@ def anchor_filter(prefixed_name):
 @app.template_filter('markdown')
 def markdown_filter(text):
     """Hand-written prose in templates: {% filter markdown %} ... {% endfilter %}."""
-    return Markup(markdown.markdown(text, extensions=['fenced_code', 'tables', 'attr_list']))
+    html = markdown.markdown(text, extensions=['fenced_code', 'tables', 'attr_list'])
+    # Bootstrap styling, same as the hand-written tables
+    return Markup(html.replace('<table>', '<table class="table table-sm table-bordered align-top">'))
 
 
 def get_by_navn(version, navn):
