@@ -57,14 +57,47 @@
 <div class="container pb-5">
 <h1>Andre krav</h1>
 <p>Ud over XSD-skemaet og restriktionerne fra featurekataloget (se <a href="../2.2.0/restriktioner/index.html">Restriktioner</a>) stiller LER-serveren nogle få yderligere krav.</p>
-<p>Fejlkoderne har jeg kaldt: G1, G2, G3, G4.</p>
-<p>Denne side er ikke version-præfikset: reglerne handler om GML/XML generelt og håndhæves af
+<p>Denne side er ikke version-præfikset: reglerne håndhæves af
 LER-serveren uafhængigt af datamodel-versionen. De er dog kun testet mod den version, extest
 tog imod på testtidspunktet.</p>
+<p>Koderne (G1, G2 …) er mine egne. Hvor LER's API har en tilsvarende kode (se
+<a href="../errorcodes/index.html">Fejlkoder</a>), står den ved siden af. Klik på koden for
+detaljer.</p>
+<div class="table-responsive">
+<table class="table table-sm table-bordered align-top">
+<thead><tr><th>Kode</th><th>LER API-kode</th><th>Status</th><th>Krav</th></tr></thead>
+<tbody>
+<tr><td><a href="#G1">G1</a></td><td><code>Check3DGeometryRule</code></td><td>Testet 2026-09-26</td>
+<td>Geometrien skal have 3 tal pr. vertex.</td></tr>
+<tr><td><a href="#G2">G2</a></td><td><code>Check3DGeometryRule</code></td><td>Testet 2026-09-26</td>
+<td><code>srsDimension</code> skal være 3, hvis den er sat, både på geometri-elementet og på <code>gml:posList</code>.</td></tr>
+<tr><td><a href="#G3">G3</a></td><td>–</td><td>Ikke reproduceret</td>
+<td>XML'en bør ikke indeholde kommentarer.</td></tr>
+<tr><td><a href="#G4">G4</a></td><td>– (13-300 med .NET-fejltekst)</td><td>Reproduceret, eksperiment mangler</td>
+<td><code>xmlns:xlink</code> skal være deklareret, også selvom prefixet ikke bruges.</td></tr>
+<tr><td><a href="#G5">G5</a></td><td><code>EtableringsTidsPunktRule</code></td><td>Testet 2026-09-26</td>
+<td><code>etableringstidspunkt</code> skal overholde G5.1–G5.6.</td></tr>
+<tr><td class="ps-4"><a href="#G5.1">G5.1</a></td><td><code class="text-break">EtableringsTidsPunktRule_DateValueIsNotValid</code></td><td>Testet 2026-09-26</td>
+<td>Værdien skal være <code>ÅÅÅÅ-MM-DD</code>, <code>ÅÅÅÅ-MM</code> eller <code>ÅÅÅÅ</code>.</td></tr>
+<tr><td class="ps-4"><a href="#G5.2">G5.2</a></td><td><code class="text-break">EtableringsTidsPunktRule_ValueIsNullOrEmpty</code></td><td>Testet 2026-09-26</td>
+<td>Værdien må ikke være tom.</td></tr>
+<tr><td class="ps-4"><a href="#G5.3">G5.3</a></td><td><code class="text-break">EtableringsTidsPunktRule_ValueIsYearFormat_MatchConfiguration_IndeterminatePositionIsNull</code></td><td>Testet 2026-09-26</td>
+<td>Et år må ikke være skæringsåret (<code>2023</code>).</td></tr>
+<tr><td class="ps-4"><a href="#G5.4">G5.4</a></td><td><code class="text-break">EtableringsTidsPunktRule_NotValid_IndeterminatePositionValue</code></td><td>Testet 2026-09-26</td>
+<td><code>indeterminatePosition</code> må kun være <code>before</code>.</td></tr>
+<tr><td class="ps-4"><a href="#G5.5">G5.5</a></td><td><code class="text-break">EtableringsTidsPunktRule_ValueIsHigherThanConfiguration_IndeterminatePositionIsNotNull</code></td><td>Testet 2026-09-26</td>
+<td>Med <code>indeterminatePosition="before"</code> må datoen ikke være efter skæringsdatoen.</td></tr>
+<tr><td class="ps-4"><a href="#G5.6">G5.6</a></td><td><code class="text-break">EtableringsTidsPunktRule_calendarEraNameAttributeNotNull</code></td><td>Testet 2026-09-26</td>
+<td><code>calendarEraName</code> må ikke være sat.</td></tr>
+<tr><td><a href="#G6">G6</a></td><td>–</td><td>Egen anbefaling</td>
+<td><code>etableringstidspunkt</code> skal være en dato, der findes (fx ikke <code>2024-02-30</code>).</td></tr>
+</tbody>
+</table>
+</div>
 
-<h2 class="h4 mt-4">G1 - Alle geometrier skal angives i 3 dimensioner, dog kan der bruges -99 for Z</h2>
+<h2 class="h4 mt-4" id="G1">G1 - Geometrien skal have 3 tal pr. vertex</h2>
 <p>Bekræftet ved faktiske sends mod LER's rigtige extest-API (ikke kun XSD-validering) - se
-eksperimenterne i <code>ler-api-experiments/xml/G1/</code>.</p>
+eksperimenterne i <code>ler-api-experiments/graveforespoergselssvar/koordinater/</code>.</p>
 <p>Det er aldrig tilladt kun at opgive to tal per vertex - heller ikke hvis man sætter
 <code>srsDimension="2"</code> eksplicit. Begge varianter afvises med identisk fejl fra en navngivet
 regel:</p>
@@ -80,9 +113,9 @@ skal <code>vejledendeDybde</code> angives, hvis etableringstidspunktet er efter 
 Z=-99 bruges. Udelades <code>vejledendeDybde</code> i den situation, afvises dokumentet - men af den
 regel (<code>VejledendeDybdeBetingelse</code>), ikke af Check3DGeometry.</p>
 
-<h2 class="h4 mt-4">G2 - srsDimension=3 er ikke selv påkrævet, men forkert sat er fatalt</h2>
+<h2 class="h4 mt-4" id="G2">G2 - srsDimension skal være 3, hvis den er sat</h2>
 <p>Testet ved faktiske sends mod LER's rigtige extest-API - se
-<code>ler-api-experiments/xml/G2/</code>. Den oprindelige antagelse ("skal
+<code>ler-api-experiments/graveforespoergselssvar/srsdimension/</code>. Den oprindelige antagelse ("skal
 eksplicit sætte <code>srsDimension="3"</code>, ellers afviser LER") holder ikke: en <code>gml:posList</code>
 med korrekt tre tal pr. vertex, men helt uden <code>srsDimension</code>-attribut, blev accepteret.</p>
 <p>Til gengæld er attributten ikke harmløs at sætte forkert. Sætter man
@@ -100,7 +133,7 @@ eksplicit <code>srsDimension="3"</code>. Kilde:
 (fx <code>gml:LineString</code>, arver <code>gml:SRSReferenceGroup</code> fra <code>AbstractGeometryType</code>) og
 på <code>gml:posList</code> selv (som har sin egen <code>SRSReferenceGroup</code>). XSD'en tillader begge dele
 og har ingen regel for hvad der sker ved en konflikt - det er testet direkte (samme mappe,
-<code>ler-api-experiments/xml/G2/</code>):</p>
+<code>ler-api-experiments/graveforespoergselssvar/srsdimension/</code>):</p>
 <ul>
 <li>At sætte den samme, korrekte værdi begge steder er ikke en fejl - <code>LineString srsDimension="3"</code>
 + <code>posList srsDimension="3"</code> accepteres som normalt.</li>
@@ -114,13 +147,13 @@ niveauets attribut læses og håndhæves selvstændigt.</li>
 <p>Konklusion: <strong>begge steder skal enten være <code>"3"</code> eller udeladt</strong> - en forkert værdi
 ét sted afviser dokumentet, uanset hvad der står (eller ikke står) det andet sted.</p>
 
-<h2 class="h4 mt-4">G3 - Undgå XML-kommentarer</h2>
+<h2 class="h4 mt-4" id="G3">G3 - XML'en bør ikke indeholde kommentarer</h2>
 <p>Jeg mindes at have oplevet, at LER-serveren returnerede en ubehjælpelig/misvisende fejl, når den XML, jeg
 sendte, indeholdt XML-kommentarer.</p>
 <p>I skrivende stund (september 2026) har jeg ikke kunnet reproducere problemet. Jeg lader alligevel
 G3 stå, indtil jeg er sikker på, at kommentarer ikke giver problemer.</p>
 
-<h2 class="h4 mt-4">G4 - Deklarér xmlns:xlink, selvom prefixet ikke bruges</h2>
+<h2 class="h4 mt-4" id="G4">G4 - xmlns:xlink skal være deklareret, også selvom prefixet ikke bruges</h2>
 <p>Elementer som <code>ler:geometri</code> har typen <code>gml:GeometryPropertyType</code>, som via
 <code>gml:AssociationAttributeGroup</code> arver attributten <code>xlink:type</code> med
 <code>fixed="simple"</code>. Fordi attributten er "fixed" og ikke "required", er det helt lovligt
@@ -143,6 +176,73 @@ xlink-namespacet i selve dokumentet, selvom attributten aldrig optræder eksplic
 uanset om prefixet reelt bruges - en velkendt, harmløs praksis i GML-økosystemet netop for at
 undgå denne slags validator-kvababbelser. Uafklaret: om det kun gælder <code>geometri</code>, eller
 generelt alle <code>gml:*PropertyType</code>-elementer der arver <code>gml:AssociationAttributeGroup</code>.</p>
+
+<h2 class="h4 mt-4" id="G5">G5 - etableringstidspunkt skal overholde LER's EtableringstidspunktRule</h2>
+<p><code>etableringstidspunkt</code> har typen <code>gml:TimePositionType</code>. Den er en union af
+<code>date</code>, <code>gYearMonth</code>, <code>gYear</code>, <code>time</code>, <code>dateTime</code>,
+<code>anyURI</code> og <code>decimal</code>, og fordi <code>anyURI</code> er med, er stort set enhver
+streng XSD-gyldig. Featurekataloget er mere stramt: "Tidsangivelsen kan være en bestemt dato, en
+bestemt måned, et bestemt år. Angivelsen kan også være ”ukendt, dog med sikkerhed før en given
+dato”."</p>
+<p>LER-serveren håndhæver det med en navngivet regel, <code>EtableringstidspunktRule</code>
+(fejlkode <a href="../errorcodes/index.html">13-300</a>). Reglen har seks underkoder i LER's
+fejlkodeliste, og jeg har givet hver sin kode:</p>
+<table class="table table-sm">
+<thead><tr><th>Kode</th><th>Krav</th><th>LER's StatusCode og fejltekst</th></tr></thead>
+<tbody>
+<tr id="G5.1"><td>G5.1</td><td>Værdien skal være præcis <code>ÅÅÅÅ-MM-DD</code>, <code>ÅÅÅÅ-MM</code> eller <code>ÅÅÅÅ</code>.
+Tidszone, klokkeslæt, andre skrivemåder og tekst afvises, fx <code>2024-4</code>,
+<code>20240401</code>, <code>01-04-2024</code>, <code>2024-04-01Z</code>,
+<code>2024-04-01T12:00:00</code>, <code>april 2024</code>.</td>
+<td><code>EtableringsTidsPunktRule_DateValueIsNotValid</code><br>
+<code>EtableringstidspunktRule value is not valid dateFormat</code></td></tr>
+<tr id="G5.2"><td>G5.2</td><td>Værdien må ikke være tom. Det gælder også med <code>indeterminatePosition</code>,
+fx <code>indeterminatePosition="unknown"</code> uden værdi.</td>
+<td><code>EtableringsTidsPunktRule_ValueIsNullOrEmpty</code><br>
+<code>EtableringstidspunktRule dateString value is null or empty</code></td></tr>
+<tr id="G5.3"><td>G5.3</td><td>Et år må ikke være skæringsåret (<code>2023</code>), fordi det ikke kan
+afgøres, om det er før eller efter skæringsdatoen.</td>
+<td><code>EtableringsTidsPunktRule_ValueIsYearFormat_MatchConfiguration_IndeterminatePositionIsNull</code><br>
+<code>EtableringstidspunktRule value is year format, matching configuration and indeterminatePosition is null</code></td></tr>
+<tr id="G5.4"><td>G5.4</td><td><code>indeterminatePosition</code> må kun være <code>before</code>.
+<code>after</code>, <code>now</code> og <code>unknown</code> afvises.</td>
+<td><code>EtableringsTidsPunktRule_NotValid_IndeterminatePositionValue</code><br>
+<code>EtableringstidspunktRule indeterminatePosition value is not null or before</code></td></tr>
+<tr id="G5.5"><td>G5.5</td><td>Med <code>indeterminatePosition="before"</code> må datoen ikke være efter
+skæringsdatoen. <code>before</code> + <code>2023-07-01</code> er ok, <code>before</code> +
+<code>2024-04-01</code> afvises.</td>
+<td><code>EtableringsTidsPunktRule_ValueIsHigherThanConfiguration_IndeterminatePositionIsNotNull</code><br>
+<code>EtableringstidspunktRule value is higher than configuration and indeterminatePosition is not null</code></td></tr>
+<tr id="G5.6"><td>G5.6</td><td><code>calendarEraName</code> må ikke være sat, heller ikke til en tom streng.</td>
+<td><code>EtableringsTidsPunktRule_calendarEraNameAttributeNotNull</code><br>
+<code>EtableringstidspunktRule calendarEraName is not null</code></td></tr>
+</tbody>
+</table>
+<p>"Ukendt, dog med sikkerhed før en given dato" skrives altså som
+<code>&lt;ler:etableringstidspunkt indeterminatePosition="before"&gt;2023-07-01&lt;/ler:etableringstidspunkt&gt;</code>.</p>
+<p>Øvrige iagttagelser:</p>
+<ul>
+<li>Skæringsdatoen står ikke i featurekataloget, men LER's opførsel passer med 2023-07-01, og
+"efter" betyder strengt efter: <code>2023-07-01</code> og <code>2023-07</code> er før,
+<code>2023-07-02</code> og <code>2023-08</code> er efter. <code>2024</code> er efter.</li>
+<li>Mellemrum før og efter værdien fjernes.</li>
+<li><code>frame</code> ignoreres, også med en ukendt værdi som <code>#foo</code>.</li>
+<li>Ikke testet: <code>before</code> sammen med et år eller en måned (fx <code>before</code> +
+<code>2023</code>), og hvilken underkode LER melder, når flere krav er brudt på én gang.</li>
+</ul>
+<p>Testet med 57 værdier og attributkombinationer mod v3 på extest 2026-09-26, se
+<code>ler-api-experiments/graveforespoergselssvar/etableringstidspunkt/</code>.</p>
+
+<h2 class="h4 mt-4" id="G6">G6 - etableringstidspunkt skal være en dato, der findes</h2>
+<p>G6 er ikke et krav fra LER-serveren, men min egen anbefaling.</p>
+<p>LER tjekker kun formatet (G5.1), ikke om datoen findes. <code>2024-02-30</code>,
+<code>2023-02-29</code>, <code>2024-13-01</code>, <code>2024-00-01</code> og <code>0000-01-01</code>
+blev alle accepteret og regnet som <em>før</em> skæringsdatoen, også når året er efter
+skæringsåret. En dato som <code>2024-11-31</code> slipper altså formentlig for de krav, der
+gælder efter skæringsdatoen.</p>
+<p>Jeg betragter en dato, der ikke findes, som ugyldigt input, som LER burde afvise. G6 kræver,
+at datoen er gyldig efter XML Schema 1.0 (<code>xs:date</code> og <code>xs:gYearMonth</code>).
+Det udelukker også år <code>0000</code>, som ikke findes i XML Schema 1.0.</p>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
