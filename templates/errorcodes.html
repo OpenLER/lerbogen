@@ -27,6 +27,12 @@ en kuvert med nøglerne `Data`, `StatusCode`, `RequestId`, `TransactionId`,
 `StatusCode` 200/201 betyder ok, 400/401/403/500 betyder fejl. Samme fejl kan
 få forskellig `StatusCode` på forskellige endpoints.
 
+**HTTP-statuskoden er altid 200**, også når `StatusCode` i body'en er 400, 401 eller
+500. Normal praksis for et REST-API er, at HTTP-statuskoden afspejler udfaldet, også
+når fejlen opstår i applikationen. Det gør LER kun i de ydre lag (IIS og ASP.NET).
+En klient skal derfor altid læse `StatusCode` i body'en. `raise_for_status()` og
+lignende i HTTP-biblioteker opdager ikke LER's fejl.
+
 Ved en fejl er `Error` udfyldt. I alle de svar, jeg har set, har den altid de
 samme seks felter. Et eksempel, hvor geometrien kun havde 2 tal pr. vertex:
 

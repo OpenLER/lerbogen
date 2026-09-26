@@ -98,6 +98,11 @@ en kuvert med nøglerne <code>Data</code>, <code>StatusCode</code>, <code>Reques
 <code>Forretningskvittering</code>, <code>Transportkvittering</code>, <code>Error</code> og <code>SendTimestamp</code>.
 <code>StatusCode</code> 200/201 betyder ok, 400/401/403/500 betyder fejl. Samme fejl kan
 få forskellig <code>StatusCode</code> på forskellige endpoints.</p>
+<p><strong>HTTP-statuskoden er altid 200</strong>, også når <code>StatusCode</code> i body'en er 400, 401 eller
+500. Normal praksis for et REST-API er, at HTTP-statuskoden afspejler udfaldet, også
+når fejlen opstår i applikationen. Det gør LER kun i de ydre lag (IIS og ASP.NET).
+En klient skal derfor altid læse <code>StatusCode</code> i body'en. <code>raise_for_status()</code> og
+lignende i HTTP-biblioteker opdager ikke LER's fejl.</p>
 <p>Ved en fejl er <code>Error</code> udfyldt. I alle de svar, jeg har set, har den altid de
 samme seks felter. Et eksempel, hvor geometrien kun havde 2 tal pr. vertex:</p>
 <pre><code>{
