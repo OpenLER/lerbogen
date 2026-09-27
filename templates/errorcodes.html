@@ -63,15 +63,44 @@ Fejlkoderne findes i to niveauer:
   felt for sig selv, men fremgår kun som tekst i `PrettyErrorMessage`, og
   `ErrorCode` er stadig den overordnede kode, fx `13-300`.
 
-`PrettyErrorMessage` ved `13-300` har flere formater:
+### PrettyErrorMessage ved 13-300 {: .h6 .mt-3 }
 
-- `Regel: tekst`, fx `Check3DGeometry: Geometrier er ikke angivet i 3 dimensioner …`.
-  Regelnavnet står uden det `Rule`, som koden har i listen herunder (`Check3DGeometryRule`).
-- `EtableringstidspunktRule value is not valid dateFormat …`: med `Rule` og uden kolon.
-- `Line: 11, Position 32: 'The '…:gyldigTil' element is invalid …'`: XSD-fejl, med .NET's egen tekst.
+Ved `13-300` består `PrettyErrorMessage` af én eller flere linjer, typisk én fejl pr.
+linje. En regel, der er brudt i flere features, giver én linje pr. feature. Her er to
+features afvist, og `NojagtighedsklasseVertikalBetingelse` står der én gang for hver:
+
+```
+UdvendigBreddeBetingelse: … at element: AndenLedning  andenledning-1.
+UdvendigDiameterBetingelse: … at element: AndenLedning  andenledning-1.
+UdvendigHøjdeBetingelse: … at element: AndenLedning  andenledning-1.
+NojagtighedsklasseVertikalBetingelse: … at element: Foeringsroer  foeringsroer-1.
+NojagtighedsklasseVertikalBetingelse: … at element: AndenLedning  andenledning-1.
+```
+
+Én fejl kan også give flere linjer. En ugyldig `etableringstidspunkt` i én feature giver
+den samme linje 9 gange.
+
+Beskeden indeholder enten XSD-fejl eller regelfejl, aldrig begge: XSD-fejl stopper
+valideringen, før reglerne tjekkes.
+
+Linjerne har forskellige formater:
+
+- `Regel: tekst at element: Featuretype gml:id.`, fx `NojagtighedsklasseVertikalBetingelse: …
+  at element: Foeringsroer  foeringsroer-1.` `Check3DGeometry` angiver kun elementet:
+  `… at element: geometri  .` Regelnavnet svarer ikke altid præcist til koden i listen
+  herunder. Nogle gange mangler kun `Rule` (`Check3DGeometry` / `Check3DGeometryRule`),
+  andre gange er navnet også stavet anderledes (`NojagtighedsklasseVertikalBetingelse` /
+  `LedningNoejagtighedsklasseVertikalBetingelseRule`).
+- `EtableringstidspunktRule value is not valid dateFormat at element: etableringstidspunkt  Parent gml:id - elledning-1.`:
+  med `Rule`, uden kolon og med en anden angivelse af feature.
+- `Line: 11, Position 32: '…'`: XSD-fejl, med .NET's egen tekst. De efterfølges af linjen
+  `GML filen overholder ikke XSD skema for graveforespørgselssvar`.
+- Parserbeskeder, når XML'en ikke er velformet, fx `Root element is missing.`, også
+  efterfulgt af XSD-linjen.
 - Andre .NET-fejl uden regelnavn, fx ved manglende `xmlns:xlink` (se Andre krav, G4).
 
-Samme `PrettyErrorMessage` kan indeholde flere fejl.
+Det længste svar, jeg har set, er 19 linjer. Om LER afkorter meget lange beskeder, er
+ikke undersøgt.
 
 ## Listen fra /api/errorcodes {: .h4 .mt-4 }
 

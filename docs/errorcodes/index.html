@@ -132,15 +132,38 @@ samme seks felter. Et eksempel, hvor geometrien kun havde 2 tal pr. vertex:</p>
   felt for sig selv, men fremgår kun som tekst i <code>PrettyErrorMessage</code>, og
   <code>ErrorCode</code> er stadig den overordnede kode, fx <code>13-300</code>.</li>
 </ul>
-<p><code>PrettyErrorMessage</code> ved <code>13-300</code> har flere formater:</p>
+<h3 class="h6 mt-3">PrettyErrorMessage ved 13-300</h3>
+<p>Ved <code>13-300</code> består <code>PrettyErrorMessage</code> af én eller flere linjer, typisk én fejl pr.
+linje. En regel, der er brudt i flere features, giver én linje pr. feature. Her er to
+features afvist, og <code>NojagtighedsklasseVertikalBetingelse</code> står der én gang for hver:</p>
+<pre><code>UdvendigBreddeBetingelse: … at element: AndenLedning  andenledning-1.
+UdvendigDiameterBetingelse: … at element: AndenLedning  andenledning-1.
+UdvendigHøjdeBetingelse: … at element: AndenLedning  andenledning-1.
+NojagtighedsklasseVertikalBetingelse: … at element: Foeringsroer  foeringsroer-1.
+NojagtighedsklasseVertikalBetingelse: … at element: AndenLedning  andenledning-1.
+</code></pre>
+<p>Én fejl kan også give flere linjer. En ugyldig <code>etableringstidspunkt</code> i én feature giver
+den samme linje 9 gange.</p>
+<p>Beskeden indeholder enten XSD-fejl eller regelfejl, aldrig begge: XSD-fejl stopper
+valideringen, før reglerne tjekkes.</p>
+<p>Linjerne har forskellige formater:</p>
 <ul>
-<li><code>Regel: tekst</code>, fx <code>Check3DGeometry: Geometrier er ikke angivet i 3 dimensioner …</code>.
-  Regelnavnet står uden det <code>Rule</code>, som koden har i listen herunder (<code>Check3DGeometryRule</code>).</li>
-<li><code>EtableringstidspunktRule value is not valid dateFormat …</code>: med <code>Rule</code> og uden kolon.</li>
-<li><code>Line: 11, Position 32: 'The '…:gyldigTil' element is invalid …'</code>: XSD-fejl, med .NET's egen tekst.</li>
+<li><code>Regel: tekst at element: Featuretype gml:id.</code>, fx <code>NojagtighedsklasseVertikalBetingelse: …
+  at element: Foeringsroer  foeringsroer-1.</code> <code>Check3DGeometry</code> angiver kun elementet:
+  <code>… at element: geometri  .</code> Regelnavnet svarer ikke altid præcist til koden i listen
+  herunder. Nogle gange mangler kun <code>Rule</code> (<code>Check3DGeometry</code> / <code>Check3DGeometryRule</code>),
+  andre gange er navnet også stavet anderledes (<code>NojagtighedsklasseVertikalBetingelse</code> /
+  <code>LedningNoejagtighedsklasseVertikalBetingelseRule</code>).</li>
+<li><code>EtableringstidspunktRule value is not valid dateFormat at element: etableringstidspunkt  Parent gml:id - elledning-1.</code>:
+  med <code>Rule</code>, uden kolon og med en anden angivelse af feature.</li>
+<li><code>Line: 11, Position 32: '…'</code>: XSD-fejl, med .NET's egen tekst. De efterfølges af linjen
+  <code>GML filen overholder ikke XSD skema for graveforespørgselssvar</code>.</li>
+<li>Parserbeskeder, når XML'en ikke er velformet, fx <code>Root element is missing.</code>, også
+  efterfulgt af XSD-linjen.</li>
 <li>Andre .NET-fejl uden regelnavn, fx ved manglende <code>xmlns:xlink</code> (se Andre krav, G4).</li>
 </ul>
-<p>Samme <code>PrettyErrorMessage</code> kan indeholde flere fejl.</p>
+<p>Det længste svar, jeg har set, er 19 linjer. Om LER afkorter meget lange beskeder, er
+ikke undersøgt.</p>
 <h2 class="h4 mt-4">Listen fra /api/errorcodes</h2>
 <p>LER's autoritative kilde for fejlkoderne er endpointet <code>GET /api/errorcodes</code>
 (se <code>adr/901-ler-api-error-codes.md</code> i repoet). Listen herunder er hentet derfra
