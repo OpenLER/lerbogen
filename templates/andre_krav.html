@@ -6,7 +6,7 @@
 <p>Denne side er ikke version-præfikset: reglerne håndhæves af
 LER-serveren uafhængigt af datamodel-versionen. De er dog kun testet mod den version, extest
 tog imod på testtidspunktet.</p>
-<p>Koderne (G1, G2 …) er mine egne. Hvor LER's API har en tilsvarende kode (se
+<p>Koderne (G1, G3 …) er mine egne. Hvor LER's API har en tilsvarende kode (se
 <a href="{{ url_for('errorcodes') }}">Fejlkoder</a>), står den ved siden af. Klik på koden for
 detaljer.</p>
 <div class="table-responsive">
@@ -14,8 +14,10 @@ detaljer.</p>
 <thead><tr><th>Kode</th><th>LER API-kode</th><th>Status</th><th>Krav</th></tr></thead>
 <tbody>
 <tr><td><a href="#G1">G1</a></td><td><code>Check3DGeometryRule</code></td><td>Testet 2026-09-26</td>
+<td>Geometrien skal overholde G1.1–G1.2.</td></tr>
+<tr><td class="ps-4"><a href="#G1.1">G1.1</a></td><td><code>Check3DGeometryRule</code></td><td>Testet 2026-09-26</td>
 <td>Geometrien skal have 3 tal pr. vertex.</td></tr>
-<tr><td><a href="#G2">G2</a></td><td><code>Check3DGeometryRule</code></td><td>Testet 2026-09-26</td>
+<tr><td class="ps-4"><a href="#G1.2">G1.2</a></td><td><code>Check3DGeometryRule</code></td><td>Testet 2026-09-26</td>
 <td><code>srsDimension</code> skal være 3, hvis den er sat, både på geometri-elementet og på <code>gml:posList</code>.</td></tr>
 <tr><td><a href="#G3">G3</a></td><td>–</td><td>Ikke reproduceret</td>
 <td>XML'en bør ikke indeholde kommentarer.</td></tr>
@@ -37,20 +39,27 @@ detaljer.</p>
 <td><code>calendarEraName</code> må ikke være sat.</td></tr>
 <tr><td><a href="#G6">G6</a></td><td>–</td><td>Egen anbefaling</td>
 <td><code>etableringstidspunkt</code> skal være en dato, der findes (fx ikke <code>2024-02-30</code>).</td></tr>
+<tr><td><a href="#G7">G7</a></td><td><code>SimpleFeatureRule</code> (?)</td><td>Ikke testet</td>
+<td>Geometrien må ikke krydse eller røre sig selv.</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 class="h4 mt-4" id="G1">G1 - Geometrien skal have 3 tal pr. vertex</h2>
-<p>Bekræftet ved faktiske sends mod LER's rigtige extest-API (ikke kun XSD-validering) - se
-eksperimenterne i <code>ler-api-experiments/graveforespoergselssvar/koordinater/</code>.</p>
-<p>Det er aldrig tilladt kun at opgive to tal per vertex - heller ikke hvis man sætter
-<code>srsDimension="2"</code> eksplicit. Begge varianter afvises med identisk fejl fra en navngivet
-regel:</p>
+<h2 class="h4 mt-4" id="G1">G1 - Geometrien skal overholde LER's Check3DGeometry</h2>
+<p>LER-serveren tjekker geometriens dimension med en navngiven regel. Alle brud afvises med
+samme fejl:</p>
 <pre><code>ErrorCode: 13-300
 Check3DGeometry: Geometrier er ikke angivet i 3 dimensioner at element: geometri  .</code></pre>
-<p><code>srsDimension</code>-attributten har altså ingen betydning for dette check - det er antallet
-af tal pr. vertex der afgør resultatet.</p>
+<p>Reglen dækker to krav, G1.1 og G1.2. Begge er bekræftet ved faktiske sends mod LER's
+extest-API, se <code>ler-api-experiments/graveforespoergselssvar/koordinater/</code> og
+<code>ler-api-experiments/graveforespoergselssvar/srsdimension/</code>. Kun <code>gml:LineString</code>
+med <code>gml:posList</code> er testet.</p>
+
+<h3 class="h6 mt-3" id="G1.1">G1.1 - Geometrien skal have 3 tal pr. vertex</h3>
+<p>Det er aldrig tilladt kun at opgive to tal per vertex - heller ikke hvis man sætter
+<code>srsDimension="2"</code> eksplicit. Begge varianter afvises med <code>Check3DGeometry</code>.
+<code>srsDimension="2"</code> gør altså ikke 2D-koordinater lovlige. Det samme gælder, hvis antallet af
+tal ikke går op i 3, fx 4 tal med <code>srsDimension="3"</code>.</p>
 <p>Z=-99 accepteres som "ukendt"-værdi for Z, men det er ikke en undtagelse fra Check3DGeometry -
 det tæller stadig som 3 tal pr. vertex og godkendes af det check. Det er til gengæld betinget af
 en allerede dokumenteret restriktion (se <a href="{{ url_for('restriktioner', version=latest_version) }}">Restriktioner</a>,
@@ -59,16 +68,13 @@ skal <code>vejledendeDybde</code> angives, hvis etableringstidspunktet er efter 
 Z=-99 bruges. Udelades <code>vejledendeDybde</code> i den situation, afvises dokumentet - men af den
 regel (<code>VejledendeDybdeBetingelse</code>), ikke af Check3DGeometry.</p>
 
-<h2 class="h4 mt-4" id="G2">G2 - srsDimension skal være 3, hvis den er sat</h2>
-<p>Testet ved faktiske sends mod LER's rigtige extest-API - se
-<code>ler-api-experiments/graveforespoergselssvar/srsdimension/</code>. Den oprindelige antagelse ("skal
+<h3 class="h6 mt-3" id="G1.2">G1.2 - srsDimension skal være 3, hvis den er sat</h3>
+<p>Den oprindelige antagelse ("skal
 eksplicit sætte <code>srsDimension="3"</code>, ellers afviser LER") holder ikke: en <code>gml:posList</code>
 med korrekt tre tal pr. vertex, men helt uden <code>srsDimension</code>-attribut, blev accepteret.</p>
 <p>Til gengæld er attributten ikke harmløs at sætte forkert. Sætter man
 <code>srsDimension="2"</code> - selvom der rent faktisk står 3 tal pr. vertex (reelt 3D-data) -
-afvises dokumentet alligevel, med samme <a href="{{ url_for('errorcodes') }}">13-300</a>-fejl som i
-G1 (<code>Check3DGeometry</code>). Omvendt afvises et dokument der erklærer <code>srsDimension="3"</code>
-men kun leverer 2 tal pr. vertex også - tal-antallet passer ikke til den erklærede dimension.</p>
+afvises dokumentet alligevel med <code>Check3DGeometry</code>.</p>
 <p>Praktisk regel: lad <code>srsDimension</code> enten være udeladt eller korrekt sat til
 <code>"3"</code>, og lever altid tre tal pr. vertex. At sætte den til <code>"3"</code> er altså ikke i sig
 selv et krav, men nok den sikreste vane - en forkert værdi (fx kopieret fra en 2D-skabelon)
@@ -78,8 +84,7 @@ eksplicit <code>srsDimension="3"</code>. Kilde:
 <p><strong>srsDimension kan faktisk sættes to steder</strong> - både på selve geometri-elementet
 (fx <code>gml:LineString</code>, arver <code>gml:SRSReferenceGroup</code> fra <code>AbstractGeometryType</code>) og
 på <code>gml:posList</code> selv (som har sin egen <code>SRSReferenceGroup</code>). XSD'en tillader begge dele
-og har ingen regel for hvad der sker ved en konflikt - det er testet direkte (samme mappe,
-<code>ler-api-experiments/graveforespoergselssvar/srsdimension/</code>):</p>
+og har ingen regel for hvad der sker ved en konflikt - det er testet direkte:</p>
 <ul>
 <li>At sætte den samme, korrekte værdi begge steder er ikke en fejl - <code>LineString srsDimension="3"</code>
 + <code>posList srsDimension="3"</code> accepteres som normalt.</li>
@@ -189,4 +194,16 @@ gælder efter skæringsdatoen.</p>
 <p>Jeg betragter en dato, der ikke findes, som ugyldigt input, som LER burde afvise. G6 kræver,
 at datoen er gyldig efter XML Schema 1.0 (<code>xs:date</code> og <code>xs:gYearMonth</code>).
 Det udelukker også år <code>0000</code>, som ikke findes i XML Schema 1.0.</p>
+
+<h2 class="h4 mt-4" id="G7">G7 - Geometrien må ikke krydse eller røre sig selv</h2>
+<p>G7 er ikke testet mod LER-serveren. Det er et krav, jeg selv har formuleret, og som
+ler-xml-validator har tjekket siden juli 2026 (som <code>GEOM1</code>). Jeg har ikke fundet det i LER's
+dokumentation: featurekataloget henviser til GML Simple Features <code>[GML SF]</code>, men kun om
+hvilke geometrityper der må bruges (<code>geometriDatatyperestriktion</code>).</p>
+<p>LER's fejlkodeliste har en regel, der kan være den tilsvarende:
+<code>SimpleFeatureRule</code>, "graveforespørgselssvar: ledningsoplysninger geometri opfylder ikke GML
+Simple Feature Profile". Om den afviser en selvkrydsende linje, eller kun handler om
+geometrityper, er ikke undersøgt.</p>
+<p>Uafklaret: kravet ser kun på x og y. En ledning, der krydser over sig selv i forskellige
+dybder, ville derfor også være et brud, og det er ikke oplagt, at det er forkert data.</p>
 {% endblock %}
