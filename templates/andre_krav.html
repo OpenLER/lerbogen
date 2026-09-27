@@ -41,6 +41,8 @@ detaljer.</p>
 <td><code>etableringstidspunkt</code> skal være en dato, der findes (fx ikke <code>2024-02-30</code>).</td></tr>
 <tr><td><a href="#G7">G7</a></td><td><code>SimpleFeatureRule</code> (?)</td><td>Ikke testet</td>
 <td>Geometrien må ikke krydse eller røre sig selv.</td></tr>
+<tr><td><a href="#G8">G8</a></td><td>–</td><td>Egen anbefaling</td>
+<td><code>schemaVersion</code> skal være den fulde version X.Y.Z og passe med den version, dokumentet følger.</td></tr>
 </tbody>
 </table>
 </div>
@@ -80,7 +82,7 @@ afvises dokumentet alligevel med <code>Check3DGeometry</code>.</p>
 selv et krav, men nok den sikreste vane - en forkert værdi (fx kopieret fra en 2D-skabelon)
 udløser afvisning selv med korrekte 3D-koordinater. Alle LER's egne eksempler sætter da også
 eksplicit <code>srsDimension="3"</code>. Kilde:
-<a href="https://ler.dk/Files/C0200_Vejledning_til_udfyldelse_af_GML_for_udveksling_af_ledningsoplysninger_v_1_23.pdf">C0200_Vejledning_til_udfyldelse_af_GML_for_udveksling_af_ledningsoplysninger_v_1_23.pdf</a></p>
+<a href="https://ler.dk/Files/C0200_-_Vejledning_til_udfyldelse_af_GML_for_udveksling_af_ledningsoplysninger_v_1.24.pdf">C0200 v1.24</a></p>
 <p><strong>srsDimension kan faktisk sættes to steder</strong> - både på selve geometri-elementet
 (fx <code>gml:LineString</code>, arver <code>gml:SRSReferenceGroup</code> fra <code>AbstractGeometryType</code>) og
 på <code>gml:posList</code> selv (som har sin egen <code>SRSReferenceGroup</code>). XSD'en tillader begge dele
@@ -206,4 +208,18 @@ Simple Feature Profile". Om den afviser en selvkrydsende linje, eller kun handle
 geometrityper, er ikke undersøgt.</p>
 <p>Uafklaret: kravet ser kun på x og y. En ledning, der krydser over sig selv i forskellige
 dybder, ville derfor også være et brud, og det er ikke oplagt, at det er forkert data.</p>
+
+<h2 class="h4 mt-4" id="G8">G8 - schemaVersion skal være den fulde version X.Y.Z</h2>
+<p>G8 er ikke et krav fra LER-serveren, men min egen anbefaling.</p>
+<p><code>ler:Graveforespoergselssvar</code> skal have attributten <code>schemaVersion</code>. XSD'en kræver kun,
+at den findes (<code>type="string" use="required"</code>), og LER-serveren afviser et svar uden den. Værdien
+ser LER derimod ud til at ignorere: <code>foo</code>, <code>7.0</code>, <code>2.0</code> og
+<code>2.2.0</code> gav samme resultat. Det er endpointet, der bestemmer, hvilken version der
+valideres efter (se <a href="{{ url_for('ler_api_versions') }}">API-versioner</a>).</p>
+<p>G8 kræver, at <code>schemaVersion</code> er den fulde version X.Y.Z, fx <code>2.2.0</code>, og at den
+passer præcist med den version, dokumentet følger. Det er også sådan, LER's egne eksempler skriver
+den: <code>schemaVersion="2.0.0"</code> i
+<a href="https://ler.dk/Files/C0200_-_Vejledning_til_udfyldelse_af_GML_for_udveksling_af_ledningsoplysninger_v_1.24.pdf">C0200 v1.24</a>.</p>
+<p>X.Y er ikke nok, fordi Z-versioner kan være meget forskellige: 2.0.0 og 2.0.1 har samme XSD,
+men 2.0.1 har 7 restriktioner mere (68 og 75).</p>
 {% endblock %}
